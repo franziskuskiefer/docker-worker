@@ -201,6 +201,30 @@ production:
     secret:  !env DNS_SERVER_SECRET
     domain:  'taskcluster-worker.net'
 
+local:
+  logging:
+    secureLiveLogging: false
+
+  # DNS Server secret used for constructing hostnames from using the
+  # stateless dns server
+  statelessHostname:
+    enabled: false
+    secret:  !env DNS_SERVER_SECRET
+    domain:  'taskcluster-worker.net'
+
+  # Shutdown configuration...
+  shutdown:
+    enabled: false
+    minimumCycleSeconds: null
+
+  deviceManagement:
+    cpu:
+      enabled: false
+    loopbackAudio:
+      enabled: false
+    loopbackVideo:
+      enabled: false
+
 test:
   statsComponent: 'docker-worker-test'
   capacity: 1

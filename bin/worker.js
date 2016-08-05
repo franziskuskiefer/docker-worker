@@ -20,7 +20,7 @@ var ImageManager = require('../lib/docker/image_manager');
 
 
 // Available target configurations.
-var allowedHosts = ['aws', 'test'];
+var allowedHosts = ['aws', 'test', 'local'];
 
 // All overridable configuration options from the CLI.
 var overridableFields = [
@@ -175,7 +175,7 @@ async () => {
   let monitor = await base.monitor({
     project: 'docker-worker',
     credentials: config.taskcluster,
-    mock: profile === 'test',
+    mock: profile === 'test' || profile === 'local',
     reportUsage: false
   });
 
