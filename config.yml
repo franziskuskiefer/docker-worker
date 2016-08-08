@@ -225,6 +225,9 @@ local:
     loopbackVideo:
       enabled: false
 
+  metricsCollection:
+      hostMetricsInterval: 3600000
+
 test:
   statsComponent: 'docker-worker-test'
   capacity: 1
