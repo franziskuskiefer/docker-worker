@@ -226,7 +226,7 @@ local:
       enabled: false
 
   metricsCollection:
-      hostMetricsInterval: 3600000
+    hostMetricsInterval: 3600000
 
 test:
   statsComponent: 'docker-worker-test'
