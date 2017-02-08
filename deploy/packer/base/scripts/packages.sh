@@ -2,10 +2,10 @@
 
 set -e -v
 
-DOCKER_VERSION=1.10.1-0~trusty
+DOCKER_VERSION=1.12.6-0~ubuntu-trusty
 # Kernels < 3.13.0.77 and > 3.13.0.71 have an AUFS bug which can cause docker
 # containers to not exit properly because of zombie processes that can't be reaped.
-KERNEL_VER=3.13.0-79-generic
+KERNEL_VER=3.13.0-100-generic
 V4L2LOOPBACK_VERSION=0.8.0
 
 lsb_release -a
@@ -79,7 +79,18 @@ sudo apt-get install -y \
     jq \
     rsyslog-gnutls \
     openvpn \
-    lxc
+    lxc \
+    rng-tools \
+    liblz4-tool
+
+# Clone and build Zstandard
+sudo git clone https://github.com/facebook/zstd /zstd
+cd /zstd
+sudo make zstd
+sudo mv zstd /usr/bin
+cd /
+sudo rm -rf /zstd
+
 
 ## Clear mounts created in base image so fstab is empty in other builds...
 sudo sh -c 'echo "" > /etc/fstab'

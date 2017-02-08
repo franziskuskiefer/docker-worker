@@ -8,6 +8,7 @@ var base = require('taskcluster-base');
 var createLogger = require('../lib/log').createLogger;
 var debug = require('debug')('docker-worker:bin:worker');
 var _ = require('lodash');
+var monitoring = require('taskcluster-lib-monitor');
 
 var Runtime = require('../lib/runtime');
 var TaskListener = require('../lib/task_listener');
@@ -63,31 +64,6 @@ function verifySSLCertificates(config) {
 // Terrible wrapper around program.option.
 function o() {
   program.option.apply(program, arguments);
-}
-
-async function listenForPurgeCacheEvents(runtime, volumeCache) {
-  // see task_listener.js, listenForCancelEvents() comment
-  if (!runtime.pulse || !runtime.pulse.username || !runtime.pulse.password) {
-    runtime.log('[alert-operator] pulse credentials missing');
-    return;
-  }
-
-  let purgeCacheEvents = new taskcluster.PurgeCacheEvents();
-  let purgeCacheListener = new taskcluster.PulseListener({
-    credentials: runtime.pulse
-  });
-
-  await purgeCacheListener.bind(purgeCacheEvents.purgeCache({
-    workerType: runtime.workerType,
-    provisionerId: runtime.provisionerId
-  }));
-
-  purgeCacheListener.on('message', function (message) {
-    volumeCache.purge(message.payload.cacheName);
-  });
-
-  await purgeCacheListener.resume();
-  return purgeCacheListener;
 }
 
 // Usage.
@@ -172,16 +148,17 @@ async () => {
   // level docker-worker components.
   config.docker = require('../lib/docker')();
 
-  let monitor = await base.monitor({
+  let monitor = await monitoring({
     project: 'docker-worker',
     credentials: config.taskcluster,
     mock: profile === 'test' || profile === 'local',
     reportUsage: false
   });
 
-  config.monitor = monitor.prefix(
-    `${config.provisionerId}.` +
-    `${config.workerGroup}.${config.workerType}.` +
+  config.workerTypeMonitor = monitor.prefix(
+    `${config.provisionerId}.${config.workerType}`
+  );
+  config.monitor = config.workerTypeMonitor.prefix(
     `${config.workerNodeType.replace('.', '')}`
   );
 
@@ -241,8 +218,6 @@ async () => {
   // Instantiate PrivateKey object for decrypting secure data
   // (currently encrypted environment variables)
   runtime.privateKey = new PrivateKey(runtime.dockerWorkerPrivateKey);
-
-  runtime.purgeCacheListener = listenForPurgeCacheEvents(runtime, config.volumeCache);
 
   // Billing cycle logic is host specific so we cannot handle shutdowns without
   // both the host and the configuration to shutdown.

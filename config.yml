@@ -54,7 +54,7 @@ defaults:
 
   # Image used to  create the taskcluster proxy container.
   taskclusterProxyImage: 'taskcluster/taskcluster-proxy:latest'
-  taskclusterLogImage: 'taskcluster/livelog:v3'
+  taskclusterLogImage: 'taskcluster/livelog:v4'
   testdroidProxyImage: 'taskcluster/testdroid-proxy:0.0.7'
   balrogVPNProxyImage: 'taskclusterprivate/taskcluster-vpn-proxy:0.0.3'
   dindImage: 'taskcluster/dind-service:v4.0'
@@ -123,12 +123,6 @@ defaults:
     # Ideally we want to keep the period less than double the average task but more than the runtime of
     # most (say, ~75%) of tasks.
     slowdownDivisor: 3
-    # If signed url for queue expires within now()+expiration, refresh queues
-    expiration: 300000
-    # Number of times to retry requests to the task queue
-    maxRetries: 5
-    # Amount of time to wait between retries
-    requestRetryInterval: 2000
 
   #Registries which we can authenticate against for pulls:
   #  registries: {
@@ -171,6 +165,7 @@ defaults:
     password: !env TESTDROID_PASSWORD
 
   dockerWorkerPrivateKey: '/etc/docker-worker-priv.pem'
+  signingKeyLocation: '/etc/docker-worker-gpg-signing-key.key'
 
   dockerSave:
     expiration: '7 days'
@@ -269,6 +264,7 @@ test:
   dockerVolume: '/tmp'
 
   dockerWorkerPrivateKey: '/worker/test/docker-worker-priv.pem'
+  signingKeyLocation: '/worker/test/fixtures/gpg_signing_key.key'
 
   interactive:
     artifactName: 'private/docker-worker-tests/'

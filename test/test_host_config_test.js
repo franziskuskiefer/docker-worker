@@ -6,18 +6,18 @@ suite('test host', function() {
   setup(settings.cleanup);
   teardown(settings.cleanup);
 
-  test('billingCycleInterval', co(function* () {
-    settings.billingCycleInterval(2000);
-    assert.equal(2000, subject.billingCycleInterval());
-  }));
-
   test('configure', co(function* () {
-    settings.configure({ capacity: 2 });
+    settings.configure({ capacity: 2, billingCycleInterval: 3600 });
     assert.deepEqual(
       {
         capacity: 2,
         publicIp: '127.0.0.1',
-        workerNodeType: 'test-worker'
+        billingCycleInterval: 3600,
+        workerNodeType: 'test-worker',
+        instanceId: 'test-worker-instance',
+        instanceType: 'r3-superlarge',
+        privateIp: '169.254.1.1',
+        region: 'us-middle-1a'
       },
       (yield subject.configure())
     );

@@ -9,6 +9,7 @@ import slugid from 'slugid';
 import {createLogger} from '../lib/log';
 import {NAMESPACE, TASK_ID} from './fixtures/image_artifacts';
 import taskcluster from 'taskcluster-client';
+import monitoring from 'taskcluster-lib-monitor';
 
 let docker = Docker();
 let monitor;
@@ -22,7 +23,7 @@ const DOCKER_CONFIG = {
 
 suite('Image Manager', () => {
   setup(async () => {
-    monitor = await base.monitor({
+    monitor = await monitoring({
         credentials: {},
         project: 'docker-worker-tests',
         mock: true
@@ -39,6 +40,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     let imageId1 = await im.ensureImage(image, process.stdout);
     let imageId2 = await im.ensureImage(image, process.stdout);
 
@@ -74,6 +76,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     let imageId1 = await im.ensureImage(image, process.stdout, task, []);
     let imageId2 = await im.ensureImage(image, process.stdout, task);
 
@@ -112,6 +115,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     let imageId = await im.ensureImage(image, process.stdout, task, []);
 
     assert.ok(imageId, 'No image id was returned');
@@ -148,6 +152,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     try {
       await im.ensureImage(image, process.stdout, task, []);
       assert.ok(false, 'Images should not be used when proper scopes are not provided');
@@ -189,6 +194,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     let imageId = await im.ensureImage(image, process.stdout, task, scopes);
 
     assert.ok(imageId, 'Image should have been loaded');
@@ -224,6 +230,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     let imageId = await im.ensureImage(image, process.stdout, task, []);
 
     assert.ok(imageId, 'No image id was returned');
@@ -252,6 +259,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     try {
       let imageId = await im.ensureImage(image, process.stdout, task, []);
       assert.ok(false, 'Exception should have been thrown');
@@ -286,6 +294,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     try {
       let imageId = await im.ensureImage(image, process.stdout, task, []);
       assert.ok(false, 'Exception should have been thrown');
@@ -319,6 +328,7 @@ suite('Image Manager', () => {
     };
 
     let im = new ImageManager(runtime);
+    runtime.imageManager = im;
     try {
       await im.ensureImage(image, process.stdout, task, []);
       assert.ok(false, 'Exception should have been thrown');

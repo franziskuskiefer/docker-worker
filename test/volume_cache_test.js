@@ -13,6 +13,7 @@ suite('volume cache test', function () {
   var co = require('co');
   var cmd = require('./integration/helper/cmd');
   var base = require('taskcluster-base');
+  var monitoring = require('taskcluster-lib-monitor');
 
   // Location on the machine running the test where the cache will live
   var localCacheDir = path.join('/tmp', 'test-cache');
@@ -29,7 +30,7 @@ suite('volume cache test', function () {
   var IMAGE = 'taskcluster/test-ubuntu';
 
   setup(co(function* () {
-    monitor = yield base.monitor({
+    monitor = yield monitoring({
         credentials: {},
         project: 'docker-worker-tests',
         mock: true
@@ -142,7 +143,10 @@ suite('volume cache test', function () {
       AttachStdin:false,
       AttachStdout:true,
       AttachStderr:true,
-      Tty: true
+      Tty: true,
+      HostConfig: {
+        Binds: [cacheInstance.path + ':/docker_cache/tmp-obj-dir/']
+      }
     };
 
     var create = yield docker.createContainer(createConfig);
@@ -151,13 +155,7 @@ suite('volume cache test', function () {
     var stream = yield container.attach({stream: true, stdout: true, stderr: true});
     stream.pipe(process.stdout);
 
-    var binds = cacheInstance.path + ':/docker_cache/tmp-obj-dir/';
-
-    var startConfig = {
-      Binds: [binds],
-    };
-
-    yield container.start(startConfig);
+    yield container.start({});
     gc.removeContainer(create.id);
     gc.sweep();
     var removedContainerId = yield waitForEvent(gc, 'gc:container:removed');
@@ -204,24 +202,27 @@ suite('volume cache test', function () {
 
     yield cache.release(instance1.key);
 
+    let futurePurgeDate = new Date();
+    futurePurgeDate.setHours(futurePurgeDate.getHours() + 5);
+
     // should remove only instance1
-    cache.purge(cacheName);
+    cache.purge(cacheName, futurePurgeDate);
 
     var instance3 = yield cache.get(cacheName);
-    assert.ok(instance3.key !== instance1.key);
+    assert.notEqual(instance3.key !== instance1.key);
 
     yield cache.release(instance2);
     yield cache.release(instance3);
 
-    cache.purge(cacheName);
+    cache.purge(cacheName, futurePurgeDate);
 
     var instance4 = yield cache.get(cacheName);
 
-    assert.ok(instance4.key !== instance3.key);
+    assert.notEqual(instance4.key !== instance3.key);
     assert.ok(instance4.key !== instance2.key);
 
     instance1 = yield cache.get(cacheName);
-    cache.purge(cacheName);
+    cache.purge(cacheName, futurePurgeDate);
     yield cache.release(instance1.key);
 
     // Cannot return a volume marked for purge
